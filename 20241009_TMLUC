@@ -1,0 +1,64 @@
+SELECT
+		 'TMLUC' as "Mandante",
+		 '' as "ID",
+		 T1."UBICACION" as "UBICACION",
+		 T1."CATEGORIA" as "CATEGORIA",
+		 T1."RAZON SOCIAL MANDANTE" as "Razón Social Mandante",
+		 T1."RUT MANDANTE" as "Rut Mandante",
+		 '' as "Obra",
+		 T1."RAZON SOCIAL CONTRATISTA" as "Razón Social Contratista",
+		 T1."RUT CONTRATISTA" as "Rut Contratista",
+		 T1."PerIodo" as "Período CCOLP",
+		 T1."DOTACION" as "N° de Trabajadores a Certificar",
+		 '' as "N° Contrato o Servicio Prestado Informa Contratista",
+		 '' as "Contacto Nombre",
+		 '' as "Contacto Tel.",
+		 '' as "Contacto Email",
+		 isnull(T2."Estado Certificación", 'NO RECIBIDO') as "Estado Certificación",
+		 null as "Fecha Recepción",
+		 null as "Fecha Emisión",
+		 '' as "Ejecutivo Asignado",
+		 '' as "N° Certificado",
+		 '' as "N° Factura",
+		 '' as "Observación",
+		 NULL AS "DIAS LABORALES REPORTE"
+FROM  "CA TMLUC" AS  T1
+LEFT JOIN "Dashboard Gerencia" AS  T2 ON uppercase(T1."RUT CONTRATISTA")  = uppercase(T2."Rut Contratista")
+	 AND	T1."RUT MANDANTE"  = T2."Rut Mandante"
+	 AND	T1."PerIodo"  = T2."PERÍODO CCOLP"
+	 AND	T2.Mandante  = 'TMLUC'  
+WHERE	 T2."Estado Certificación"  is NULL
+ AND	(T1."RUT MANDANTE"  = '99550580-0'
+ OR	T1."RUT MANDANTE"  = '96565260-4')
+UNION
+ SELECT
+		 T3.Mandante as Mandante,
+		 T3."Id",
+		 T4."UBICACION" as "UBICACION",
+		 T4."CATEGORIA" as "CATEGORIA",
+		 if(T3."Rut Mandante"  = '99550580-0', 'TRESMONTES LUCCHETTI SA', 'TRESMONTES LUCCHETTI SERVICIOS SA') as "Razón Social Mandante",
+		 T3."Rut Mandante",
+		 T3."Obra",
+		 T4."RAZON SOCIAL CONTRATISTA",
+		 T3."Rut Contratista",
+		 T3."Período CCOLP",
+		 T3."N° de Trabajadores a Certificar",
+		 T3."N° Contrato o Servicio Prestado Informa Contratista",
+		 T3."Contacto Nombre",
+		 T3."Contacto Tel.",
+		 T3."Contacto Email",
+		 T3."Estado Certificación",
+		 T3."Fecha Recepción",
+		 T3."Fecha Emisión",
+		 T3."Ejecutivo Asignado",
+		 T3."N° Certificado",
+		 T3."N° Factura",
+		 T3."Observación" as "Observación",
+		 business_days(T3."Fecha Emisión", TODAY(), '7,1') AS "DIAS LABORALES REPORTE"
+FROM  "Dashboard Gerencia" AS  T3
+LEFT JOIN "CA TMLUC" AS  T4 ON uppercase(T3."Rut Contratista")  = uppercase(T4."RUT CONTRATISTA")  
+WHERE	 T3."Mandante"  = 'TMLUC'
+ AND	uppercase(T3."Rut Contratista")  = uppercase(T4."RUT CONTRATISTA")
+ AND	(T3."RUT MANDANTE"  = '99550580-0'
+ OR	T3."RUT MANDANTE"  = '96565260-4')
+ 

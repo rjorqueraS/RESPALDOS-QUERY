@@ -1,0 +1,49 @@
+SELECT DISTINCT
+		 t1."ID REGISTRO MAXIMO" as "ID",
+		 t1."ID SOLICITUD" as "Nª SOLICITUD",
+		 t1."TIPO DE SOLICITUD" as "TIPO",
+		 STR_TO_DATE(CASE t2."clase" 
+				 WHEN 'dic23'  THEN 'dec23'
+				 WHEN 'ene24'  THEN 'jan24'
+				 when 'abr24'  THEN 'apr24'
+				 when 'ago24'  THEN 'aug24'
+				 ELSE t2."clase"
+			 END, '%b%y') as "PERIODO CCOLP",
+		 t1."MANDANTE" as "MANDANTE",
+		 t1."RUT CONTRATISTA" as "RUT CONTRATISTA",
+		 t2."instalacion" as "INSTALACION",
+		 t2."contractor_name" as "RAZON SOCIAL CONTRATISTA",
+		 t1."Fecha_maxima" as "FECHA",
+		 t2.event_status as "event_status",
+		 t2.job_status as "job_status",
+		 t2.ending as "ending",
+		 t2.user as "user",
+		 t3."ID REGISTRO MAXIMO NO SERRES",
+		 t1."ID REGISTRO MAXIMO",
+		 if(t2.ending  = 'Terminada', 'CERTIFICADO', if(t2.event_status  = 'Rechazada'
+		 AND	is_contains(t2."user", 'serres.cl')  = 1, 'CON OBSERVACIONES', if(t1."INTERACCIONES SERRES"  > 1
+		 AND	is_contains(t2."user", 'serres.cl')  = 0, 'REENVIADA', If(t3."ID REGISTRO MAXIMO NO SERRES"  >= t1."ID REGISTRO MAXIMO"
+		 AND	t2.event_status  = 'Aprobada', 'EN REVISION', if(t2.job_status  = 'Aprobada'
+		 AND	t2.event_status  = 'Aprobada', 'REVISION FINAL', 'NO RECIBIDO'))))) as "ESTADO SERRES",
+		 t2."comments" as "Observación",
+		 business_days(t1."Fecha_maxima", today()) as "Dias Habiles desde Ultimo Cambio",
+		 business_days(t1."Fecha_maxima", today()) -(if(t1."Fecha_maxima"  < '2024-06-20', is_last_nday('2024-06-20', 7), 0) + if(t1."Fecha_maxima"  < '2024-08-15', is_last_nday('2024-07-16', 7), 0) + if(t1."Fecha_maxima"  < '2024-08-15', is_last_nday('2024-08-15', 7), 0) + if(t1."Fecha_maxima"  < '2024-09-18', is_last_nday('2024-09-18', 7), 0) + if(t1."Fecha_maxima"  < '2024-09-19', is_last_nday('2024-09-19', 7), 0) + if(t1."Fecha_maxima"  < '2024-09-20', is_last_nday('2024-09-20', 7), 0) + if(t1."Fecha_maxima"  < '2024-10-31', is_last_nday('2024-10-31', 7), 0) + if(t1."Fecha_maxima"  < '2024-11-01', is_last_nday('2024-11-01', 7), 0) + if(t1."Fecha_maxima"  < '2024-12-25', is_last_nday('2024-12-25', 7), 0)) as "Dias Habiles Ajustados desde Ultimo Cambio",
+		 t1."CANTIDAD DE INTERACIONES",
+		 t1."INTERACCIONES SERRES",
+		 t3."Fecha_Carga" as "Fecha_Carga",
+		 t3."ID REGISTRO MAXIMO NO SERRES" AS "ID MAX NO SERRES",
+		 t3."CANTIDAD DE INTERACIONES" AS "Nº REV",
+		 t2.ending as "CONDICION DE TERMINO",
+		 IF(t2."user"  LIKE '%serres.cl%'
+		 OR	t2."user"  LIKE '%ksec.cl%'
+		 OR	t2."user"  LIKE '%agrichile.cl%', 'SERRES', 'NO SERRES') as "USUARIO",
+		 T4."CANTIDAD DE TRABAJADORES" as "N°TRABAJADORES INFORMADOS"
+FROM  "KSEC-SERRES Ultimo Registro CLON" AS  t1
+LEFT JOIN "KSEC-BASE SOLICITUDES" AS  t2 ON t1."ID REGISTRO MAXIMO"  = t2."id"
+	 AND	t1."ID SOLICITUD"  = t2."job_id" 
+LEFT JOIN "KSEC-SERRES ID Ultimo user NO SERRES CLON" AS  t3 ON t1."ID SOLICITUD"  = t3."ID SOLICITUD"
+	 AND	t1.MANDANTE  = t3.MANDANTE 
+LEFT JOIN "KSEC-DOTACION POR SOLICITUD" AS  T4 ON t1."ID SOLICITUD"  = T4."ID"
+	 AND	t1."MANDANTE"  = T4."SITE"  
+WHERE	 t2."job_status"  <> 'Papelera'
+ AND	t2."contractor_name"  <> 'contratista ksec'
